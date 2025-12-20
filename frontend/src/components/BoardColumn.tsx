@@ -1,14 +1,8 @@
-import { TaskCard, type TaskCardData } from './TaskCard'
-
-export interface BoardColumnData {
-  id: string
-  title: string
-  accentColor: string
-  tasks: TaskCardData[]
-}
+import type { Column } from '../types/board'
+import { TaskCard } from './TaskCard'
 
 interface BoardColumnProps {
-  column: BoardColumnData
+  column: Column
 }
 
 export function BoardColumn({ column }: BoardColumnProps) {

@@ -1,24 +1,7 @@
-export type TaskPriority = 'high' | 'medium' | 'low'
-
-export interface TaskCardData {
-  id: string
-  title: string
-  description?: string
-  dueDate?: string
-  tags?: string[]
-  priority: TaskPriority
-  assignee: {
-    name: string
-    initials: string
-  }
-  subtasks?: {
-    completed: number
-    total: number
-  }
-}
+import type { Task, TaskPriority } from '../types/board'
 
 interface TaskCardProps {
-  task: TaskCardData
+  task: Task
 }
 
 const PRIORITY_CLASS_MAP: Record<TaskPriority, string> = {
