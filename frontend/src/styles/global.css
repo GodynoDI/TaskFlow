@@ -1,0 +1,224 @@
+:root {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  color: #1f2933;
+  background-color: #f6f4f0;
+  line-height: 1.5;
+  font-weight: 400;
+  --bg-sand: #f8f5f2;
+  --bg-card: #ffffff;
+  --bg-muted: #ede9e3;
+  --bg-deep: #0f172a;
+  --text-muted: #5f6b7a;
+  --accent-blue: #3b82f6;
+  --accent-lilac: #6d5efc;
+  --accent-sand: #f4c095;
+  --border-soft: rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #fdf7f1 0%, #f1f0ed 65%, #ebe8e3 100%);
+  color: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 48px clamp(24px, 5vw, 72px) 64px;
+}
+
+.app-header {
+  margin-bottom: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-title {
+  font-size: clamp(2.2rem, 4vw, 2.9rem);
+  font-weight: 600;
+  color: var(--bg-deep);
+}
+
+.app-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 640px;
+}
+
+.board-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.board-column {
+  background: linear-gradient(180deg, var(--bg-sand), var(--bg-card));
+  border-radius: 24px;
+  border: 1px solid var(--border-soft);
+  width: 320px;
+  padding: 20px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.board-column__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #1f2933;
+}
+
+.column-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.column-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.column-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.task-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.task-card {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.priority-badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.priority-high {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.priority-medium {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.priority-low {
+  background: rgba(16, 185, 129, 0.16);
+  color: #047857;
+}
+
+.due-chip {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.task-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.task-card__description {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.task-tag {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.task-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.person-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.person-chip__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6d5efc, #8ab4ff);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.subtask-indicator {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 768px) {
+  .board-column {
+    width: 280px;
+  }
+}
