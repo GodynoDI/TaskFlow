@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBoardStore } from '../store/boardStore'
 import type { Column, TaskPriority } from '../types/board'
 import './TaskModal.scss'
@@ -24,6 +24,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
   const addTask = useBoardStore((state) => state.addTask)
   const [form, setForm] = useState(defaultForm)
   const [showDescriptionField, setShowDescriptionField] = useState(false)
+  const titleInputRef = useRef<HTMLInputElement>(null)
   const columnOptions = useMemo(
     () => columns.map((column) => ({ id: column.id, title: column.title })),
     [columns]
@@ -34,6 +35,14 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
     const fallbackColumn = initialColumnId || columnOptions[0]?.id || ''
     setForm((prev) => ({ ...prev, columnId: fallbackColumn }))
   }, [isOpen, initialColumnId, columnOptions])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const timeoutId = window.setTimeout(() => {
+      titleInputRef.current?.focus()
+    }, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -111,6 +120,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
             <input
               id="title"
               name="title"
+              ref={titleInputRef}
               value={form.title}
               onChange={handleChange}
               required

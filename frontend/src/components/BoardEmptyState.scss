@@ -1,0 +1,28 @@
+.board-empty-state {
+  margin-top: 24px;
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px dashed rgba(15, 23, 42, 0.2);
+  background: linear-gradient(120deg, rgba(109, 94, 252, 0.08), rgba(59, 130, 246, 0.05));
+  text-align: center;
+  color: var(--color-gray);
+}
+
+.board-empty-state__title {
+  margin: 0 0 10px;
+  color: var(--color-black);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.board-empty-state__description {
+  margin: 0 0 16px;
+}
+
+.board-empty-state__action {
+  margin-top: 16px;
+}
+
+.board-empty-state_tone_filters {
+  background: linear-gradient(120deg, rgba(59, 130, 246, 0.08), rgba(109, 94, 252, 0.05));
+}

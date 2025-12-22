@@ -74,6 +74,7 @@ interface BoardState {
     columnId: string,
     task: Omit<Board['columns'][number]['tasks'][number], 'id'>
   ) => void
+  addColumn: (title: string, accentColor?: string) => void
 }
 
 export const useBoardStore = create<BoardState>((set) => ({
@@ -95,6 +96,28 @@ export const useBoardStore = create<BoardState>((set) => ({
           ),
         }
       })
+      return { boards }
+    }),
+  addColumn: (title, accentColor) =>
+    set((state) => {
+      const palette = ['#6d5efc', '#3b82f6', '#f2c94c', '#10b981', '#f59e0b', '#ef4444']
+
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+        const nextAccent =
+          accentColor ||
+          palette[board.columns.length % palette.length] ||
+          '#6d5efc'
+
+        const newColumn = {
+          id: crypto.randomUUID(),
+          title,
+          accentColor: nextAccent,
+          tasks: [],
+        }
+        return { ...board, columns: [...board.columns, newColumn] }
+      })
+
       return { boards }
     }),
 }))

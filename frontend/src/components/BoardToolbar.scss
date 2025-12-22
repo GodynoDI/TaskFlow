@@ -1,0 +1,49 @@
+.board-toolbar {
+  padding: 16px 20px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 20px;
+  background: var(--color-paper);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.board-toolbar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.board-toolbar__control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--color-gray);
+  flex: 1 1 200px;
+
+  input,
+  select {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.board-toolbar__control_type_search {
+  flex: 2 1 280px;
+}
+
+.board-toolbar__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--color-gray);
+  flex: 0 0 auto;
+  min-width: 140px;
+  margin-left: auto;
+  text-align: right;
+}

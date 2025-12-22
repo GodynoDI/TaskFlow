@@ -30,10 +30,16 @@
   align-items: center;
 }
 
+@import './components/BoardToolbar.scss';
+@import './components/AddColumnButton.scss';
+@import './components/BoardEmptyState.scss';
+
 .board-page__columns {
   display: flex;
+  align-items: stretch;
   gap: 24px;
-  align-items: flex-start;
+  min-height: 320px;
   overflow-x: auto;
   padding-bottom: 16px;
+  padding-right: 8px;
 }

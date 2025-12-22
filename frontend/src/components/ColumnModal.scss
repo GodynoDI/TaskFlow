@@ -1,0 +1,116 @@
+.column-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1100;
+}
+
+.column-modal {
+  background: var(--color-white);
+  border-radius: 24px;
+  width: min(420px, 100%);
+  padding: 28px;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.column-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.column-modal__title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-black);
+}
+
+.column-modal__close-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--color-gray);
+}
+
+.column-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.column-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--color-gray);
+}
+
+.column-modal__field input {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #fdfcfa;
+}
+
+.column-modal__color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+  gap: 10px;
+}
+
+.column-modal__color-option {
+  border: none;
+  border-radius: 16px;
+  height: 48px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.2rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.column-modal__color-option_active {
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12), 0 12px 20px rgba(15, 23, 42, 0.2);
+  transform: translateY(-2px);
+}
+
+.column-modal__color-check {
+  font-size: 1.1rem;
+}
+
+.column-modal__custom-color {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-gray);
+}
+
+.column-modal__custom-color input[type='color'] {
+  border: none;
+  width: 48px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.column-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
