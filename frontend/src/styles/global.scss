@@ -1,0 +1,73 @@
+:root {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  color: var(--color-black);
+  background-color: var(--color-white);
+  line-height: 1.5;
+  font-weight: 400;
+  --color-black: #1f2933;
+  --color-gray: #5f6b7a;
+  --color-white: #f6f4f0;
+  --color-paper: #ffffff;
+  --color-beige: #ede9e3;
+  --color-accent-primary: #6d5efc;
+  --color-accent-secondary: #3b82f6;
+  --color-accent-warm: #f4c095;
+  --color-accent-success: #10b981;
+  --color-accent-warning: #f59e0b;
+  --color-accent-danger: #ef4444;
+  --color-border-soft: rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(
+    circle at top,
+    var(--color-paper) 0%,
+    var(--color-white) 65%,
+    var(--color-beige) 100%
+  );
+  color: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.btn {
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s;
+  border: none;
+}
+
+.btn_type_primary {
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(109, 94, 252, 0.25);
+}
+
+.btn_type_primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 26px rgba(109, 94, 252, 0.25);
+}
+
+.btn_type_primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn_type_secondary {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #fff;
+  color: var(--color-gray);
+}

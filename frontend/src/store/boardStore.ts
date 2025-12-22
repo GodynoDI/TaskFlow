@@ -70,6 +70,10 @@ interface BoardState {
   activeBoardId: string | null
   setBoards: (boards: Board[]) => void
   setActiveBoard: (boardId: string) => void
+  addTask: (
+    columnId: string,
+    task: Omit<Board['columns'][number]['tasks'][number], 'id'>
+  ) => void
 }
 
 export const useBoardStore = create<BoardState>((set) => ({
@@ -77,4 +81,20 @@ export const useBoardStore = create<BoardState>((set) => ({
   activeBoardId: mockBoard.id,
   setBoards: (boards) => set({ boards }),
   setActiveBoard: (boardId) => set({ activeBoardId: boardId }),
+  addTask: (columnId, task) =>
+    set((state) => {
+      const newTask = { ...task, id: crypto.randomUUID() }
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+        return {
+          ...board,
+          columns: board.columns.map((column) =>
+            column.id === columnId
+              ? { ...column, tasks: [newTask, ...column.tasks] }
+              : column
+          ),
+        }
+      })
+      return { boards }
+    }),
 }))

@@ -1,5 +1,6 @@
 import type { Column } from '../types/board'
 import { TaskCard } from './TaskCard'
+import './BoardColumn.scss'
 
 interface BoardColumnProps {
   column: Column
@@ -9,17 +10,17 @@ export function BoardColumn({ column }: BoardColumnProps) {
   return (
     <section className="board-column">
       <header className="board-column__header">
-        <div className="column-pill">
+        <div className="board-column__pill">
           <span
-            className="column-pill__dot"
+            className="board-column__pill-dot"
             style={{ backgroundColor: column.accentColor }}
           />
           <span>{column.title}</span>
         </div>
-        <span className="column-count">{column.tasks.length}</span>
+        <span className="board-column__count">{column.tasks.length}</span>
       </header>
 
-      <div className="task-stack">
+      <div className="board-column__task-list">
         {column.tasks.map((task) => (
           <TaskCard key={task.id} task={task} />
         ))}

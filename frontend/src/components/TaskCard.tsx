@@ -1,13 +1,25 @@
 import type { Task, TaskPriority } from '../types/board'
+import './TaskCard.scss'
 
 interface TaskCardProps {
   task: Task
 }
 
 const PRIORITY_CLASS_MAP: Record<TaskPriority, string> = {
-  high: 'priority-badge priority-high',
-  medium: 'priority-badge priority-medium',
-  low: 'priority-badge priority-low',
+  high: 'task-card__priority task-card__priority_level_high',
+  medium: 'task-card__priority task-card__priority_level_medium',
+  low: 'task-card__priority task-card__priority_level_low',
+}
+
+const formatDueDate = (raw?: string) => {
+  if (!raw) return ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const date = new Date(raw)
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString('ru-RU')
+    }
+  }
+  return raw
 }
 
 export function TaskCard({ task }: TaskCardProps) {
@@ -25,7 +37,9 @@ export function TaskCard({ task }: TaskCardProps) {
               ? 'Средний'
               : 'Низкий'}
         </span>
-        {task.dueDate && <span className="due-chip">до {task.dueDate}</span>}
+        {task.dueDate && (
+          <span className="task-card__due-date">до {formatDueDate(task.dueDate)}</span>
+        )}
       </div>
 
       <div>
@@ -36,9 +50,9 @@ export function TaskCard({ task }: TaskCardProps) {
       </div>
 
       {task.tags && task.tags.length > 0 && (
-        <div className="tag-list">
+        <div className="task-card__tag-list">
           {task.tags.map((tag) => (
-            <span key={tag} className="task-tag">
+            <span key={tag} className="task-card__tag">
               {tag}
             </span>
           ))}
@@ -46,11 +60,11 @@ export function TaskCard({ task }: TaskCardProps) {
       )}
 
       <div className="task-card__footer">
-        <div className="person-chip">
-          <span className="person-chip__avatar">{task.assignee.initials}</span>
+        <div className="task-card__assignee">
+          <span className="task-card__assignee-avatar">{task.assignee.initials}</span>
           <span>{task.assignee.name}</span>
         </div>
-        <span className="subtask-indicator">{subtaskLabel}</span>
+        <span className="task-card__subtasks">{subtaskLabel}</span>
       </div>
     </article>
   )
