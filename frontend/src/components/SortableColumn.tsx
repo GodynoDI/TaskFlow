@@ -9,9 +9,18 @@ interface SortableColumnProps {
   tasks?: Task[]
   originalTaskCount?: number
   taskListSlot?: ReactNode
+  onTaskEdit?: (task: Task, columnId: string) => void
+  onColumnEdit?: (column: Column) => void
 }
 
-export function SortableColumn({ column, tasks, originalTaskCount, taskListSlot }: SortableColumnProps) {
+export function SortableColumn({
+  column,
+  tasks,
+  originalTaskCount,
+  taskListSlot,
+  onTaskEdit,
+  onColumnEdit,
+}: SortableColumnProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.id,
     data: {
@@ -37,6 +46,8 @@ export function SortableColumn({ column, tasks, originalTaskCount, taskListSlot 
         originalTaskCount={originalTaskCount}
         taskListSlot={taskListSlot}
         dragHandleProps={{ ...attributes, ...listeners }}
+        onTaskEdit={onTaskEdit}
+        onColumnEdit={onColumnEdit}
       />
     </div>
   )

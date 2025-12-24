@@ -15,6 +15,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+  }
+
+  &__header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
   &__priority {
@@ -44,6 +51,23 @@
   &__due-date {
     font-size: 0.78rem;
     color: var(--color-gray);
+  }
+
+  &__edit-btn {
+    border: 1px solid var(--color-border-soft);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    background: transparent;
+    color: var(--color-gray-dark);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-accent-primary);
+      color: var(--color-accent-primary);
+      background: rgba(109, 94, 252, 0.08);
+    }
   }
 
   &__title {

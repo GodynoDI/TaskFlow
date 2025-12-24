@@ -1,24 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
+import type { Column } from '../types/board'
 import './ColumnModal.scss'
 
 interface ColumnModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (title: string, accentColor?: string) => void
+  columnToEdit?: Column | null
+  onUpdate?: (columnId: string, payload: { title: string; accentColor: string }) => void
 }
 
 const COLOR_OPTIONS = ['#6d5efc', '#3b82f6', '#f2c94c', '#10b981', '#f59e0b', '#ef4444']
 
-export function ColumnModal({ isOpen, onClose, onSubmit }: ColumnModalProps) {
+export function ColumnModal({ isOpen, onClose, onSubmit, columnToEdit, onUpdate }: ColumnModalProps) {
   const [title, setTitle] = useState('')
   const [accentColor, setAccentColor] = useState(COLOR_OPTIONS[0])
   const titleInputRef = useRef<HTMLInputElement>(null)
+  const isEditMode = Boolean(columnToEdit)
 
   useEffect(() => {
     if (!isOpen) return
-    setTitle('')
-    setAccentColor(COLOR_OPTIONS[0])
-  }, [isOpen])
+    if (columnToEdit) {
+      setTitle(columnToEdit.title)
+      setAccentColor(columnToEdit.accentColor)
+    } else {
+      setTitle('')
+      setAccentColor(COLOR_OPTIONS[0])
+    }
+  }, [columnToEdit, isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -51,7 +60,12 @@ export function ColumnModal({ isOpen, onClose, onSubmit }: ColumnModalProps) {
     event.preventDefault()
     const trimmed = title.trim()
     if (!trimmed) return
-    onSubmit(trimmed, accentColor)
+    if (isEditMode && columnToEdit && onUpdate) {
+      onUpdate(columnToEdit.id, { title: trimmed, accentColor })
+    } else {
+      onSubmit(trimmed, accentColor)
+    }
+    onClose()
   }
 
   const handleCustomColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +76,7 @@ export function ColumnModal({ isOpen, onClose, onSubmit }: ColumnModalProps) {
     <div className="column-modal__backdrop" role="dialog" aria-modal="true" onClick={handleBackdropClick}>
       <div className="column-modal">
         <div className="column-modal__header">
-          <h2 className="column-modal__title">Новая колонка</h2>
+          <h2 className="column-modal__title">{isEditMode ? 'Редактировать колонку' : 'Новая колонка'}</h2>
           <button type="button" className="column-modal__close-btn" aria-label="Закрыть" onClick={onClose}>
             ×
           </button>
@@ -113,7 +127,7 @@ export function ColumnModal({ isOpen, onClose, onSubmit }: ColumnModalProps) {
               Отмена
             </button>
             <button type="submit" className="btn btn_type_primary">
-              Создать колонку
+              {isEditMode ? 'Сохранить изменения' : 'Создать колонку'}
             </button>
           </div>
         </form>

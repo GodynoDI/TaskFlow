@@ -23,7 +23,7 @@ import { SortableColumn } from './components/SortableColumn'
 import { SortableTaskCard } from './components/SortableTaskCard'
 import { ColumnTaskDropZone } from './components/ColumnTaskDropZone'
 import { useBoardStore } from './store/boardStore'
-import type { TaskPriority } from './types/board'
+import type { Column, Task, TaskPriority } from './types/board'
 import type { PriorityFilter, SortMode } from './types/filters'
 import './App.scss'
 
@@ -33,7 +33,9 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
   const [sortMode, setSortMode] = useState<SortMode>('priority')
-  const { boards, activeBoardId, addColumn, moveColumn, moveTask } = useBoardStore()
+  const [taskToEdit, setTaskToEdit] = useState<{ task: Task; columnId: string } | null>(null)
+  const [columnToEdit, setColumnToEdit] = useState<Column | null>(null)
+  const { boards, activeBoardId, addColumn, updateColumn, moveColumn, moveTask } = useBoardStore()
   const activeBoard = boards.find((board) => board.id === activeBoardId)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -110,7 +112,36 @@ function App() {
 
   const handleColumnCreate = (title: string, accentColor?: string) => {
     addColumn(title, accentColor)
+  }
+
+  const handleTaskModalClose = () => {
+    setTaskModalOpen(false)
+    setTaskToEdit(null)
+  }
+
+  const handleColumnModalClose = () => {
     setColumnModalOpen(false)
+    setColumnToEdit(null)
+  }
+
+  const handleOpenCreateTaskModal = () => {
+    setTaskToEdit(null)
+    setTaskModalOpen(true)
+  }
+
+  const handleTaskEdit = (task: Task, columnId: string) => {
+    setTaskToEdit({ task, columnId })
+    setTaskModalOpen(true)
+  }
+
+  const handleColumnEdit = (column: Column) => {
+    setColumnToEdit(column)
+    setColumnModalOpen(true)
+  }
+
+  const handleOpenCreateColumnModal = () => {
+    setColumnToEdit(null)
+    setColumnModalOpen(true)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -170,7 +201,7 @@ function App() {
           )}
         </div>
         <div className="board-page__actions">
-          <button className="btn btn_type_primary" onClick={() => setTaskModalOpen(true)}>
+          <button className="btn btn_type_primary" onClick={handleOpenCreateTaskModal}>
             + Добавить задачу
           </button>
         </div>
@@ -198,6 +229,8 @@ function App() {
                 column={column}
                 tasks={tasks}
                 originalTaskCount={originalTaskCount}
+                onTaskEdit={handleTaskEdit}
+                onColumnEdit={handleColumnEdit}
                 taskListSlot={
                   <ColumnTaskDropZone columnId={column.id}>
                     {tasks.length === 0 ? (
@@ -212,7 +245,12 @@ function App() {
                       >
                         <div className="board-column__task-list">
                           {tasks.map((task) => (
-                            <SortableTaskCard key={task.id} task={task} columnId={column.id} />
+                            <SortableTaskCard
+                              key={task.id}
+                              task={task}
+                              columnId={column.id}
+                              onEdit={handleTaskEdit}
+                            />
                           ))}
                         </div>
                       </SortableContext>
@@ -222,7 +260,7 @@ function App() {
               />
             ))}
           </SortableContext>
-          <AddColumnButton onClick={() => setColumnModalOpen(true)} />
+          <AddColumnButton onClick={handleOpenCreateColumnModal} />
         </DndContext>
       </main>
       {showBoardEmptyState && (
@@ -230,7 +268,7 @@ function App() {
           title="На доске пока нет колонок и задач."
           description="Создайте колонку, чтобы добавить первую задачу."
           actionLabel="Создать первую колонку"
-          onAction={() => setColumnModalOpen(true)}
+          onAction={handleOpenCreateColumnModal}
         />
       )}
       {showFilteredEmptyState && (
@@ -244,14 +282,17 @@ function App() {
       )}
       <TaskModal
         isOpen={isTaskModalOpen}
-        onClose={() => setTaskModalOpen(false)}
+        onClose={handleTaskModalClose}
         columns={activeBoard.columns}
         initialColumnId={activeBoard.columns[0]?.id}
+        taskToEdit={taskToEdit}
       />
       <ColumnModal
         isOpen={isColumnModalOpen}
-        onClose={() => setColumnModalOpen(false)}
+        onClose={handleColumnModalClose}
         onSubmit={handleColumnCreate}
+        columnToEdit={columnToEdit}
+        onUpdate={(columnId, payload) => updateColumn(columnId, payload)}
       />
     </div>
   )

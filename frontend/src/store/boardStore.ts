@@ -66,16 +66,22 @@ const mockBoard: Board = {
   ],
 }
 
+type BoardTask = Board['columns'][number]['tasks'][number]
+
 interface BoardState {
   boards: Board[]
   activeBoardId: string | null
   setBoards: (boards: Board[]) => void
   setActiveBoard: (boardId: string) => void
-  addTask: (
-    columnId: string,
-    task: Omit<Board['columns'][number]['tasks'][number], 'id'>
-  ) => void
+  addTask: (columnId: string, task: Omit<BoardTask, 'id'>) => void
+  updateTask: (params: {
+    taskId: string
+    fromColumnId: string
+    toColumnId?: string
+    patch: Partial<Omit<BoardTask, 'id'>>
+  }) => void
   addColumn: (title: string, accentColor?: string) => void
+  updateColumn: (columnId: string, payload: { title?: string; accentColor?: string }) => void
   moveColumn: (activeId: string, overId: string) => void
   moveTask: (
     taskId: string,
@@ -104,6 +110,59 @@ export const useBoardStore = create<BoardState>((set) => ({
           ),
         }
       })
+      return { boards }
+    }),
+  updateColumn: (columnId, payload) =>
+    set((state) => {
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+
+        const columns = board.columns.map((column) =>
+          column.id === columnId ? { ...column, ...payload } : column
+        )
+
+        return { ...board, columns }
+      })
+
+      return { boards }
+    }),
+  updateTask: ({ taskId, fromColumnId, toColumnId, patch }) =>
+    set((state) => {
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+
+        const columnsCopy = board.columns.map((column) => ({
+          ...column,
+          tasks: [...column.tasks],
+        }))
+
+        const sourceIndex = columnsCopy.findIndex((column) => column.id === fromColumnId)
+        if (sourceIndex === -1) return board
+
+        const taskIndex = columnsCopy[sourceIndex].tasks.findIndex((task) => task.id === taskId)
+        if (taskIndex === -1) return board
+
+        const [task] = columnsCopy[sourceIndex].tasks.splice(taskIndex, 1)
+        const destinationColumnId = toColumnId ?? fromColumnId
+        const destinationIndex = columnsCopy.findIndex((column) => column.id === destinationColumnId)
+        if (destinationIndex === -1) {
+          // вернуть задачу обратно, если целевая колонка не найдена
+          columnsCopy[sourceIndex].tasks.splice(taskIndex, 0, task)
+          return board
+        }
+
+        const updatedTask: BoardTask = {
+          ...task,
+          ...patch,
+        }
+
+        const isSameColumn = destinationColumnId === fromColumnId
+        const insertIndex = isSameColumn ? taskIndex : 0
+        columnsCopy[destinationIndex].tasks.splice(insertIndex, 0, updatedTask)
+
+        return { ...board, columns: columnsCopy }
+      })
+
       return { boards }
     }),
   addColumn: (title, accentColor) =>

@@ -7,9 +7,10 @@ import { TaskCard } from './TaskCard'
 interface SortableTaskCardProps {
   task: Task
   columnId: string
+  onEdit?: (task: Task, columnId: string) => void
 }
 
-export function SortableTaskCard({ task, columnId }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, columnId, onEdit }: SortableTaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: {
@@ -31,7 +32,7 @@ export function SortableTaskCard({ task, columnId }: SortableTaskCardProps) {
 
   return (
     <div ref={setNodeRef} style={style} className={className} {...attributes} {...listeners}>
-      <TaskCard task={task} />
+      <TaskCard task={task} columnId={columnId} onEdit={onEdit} />
     </div>
   )
 }

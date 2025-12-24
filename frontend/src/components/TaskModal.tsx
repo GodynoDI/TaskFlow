@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBoardStore } from '../store/boardStore'
-import type { Column, TaskPriority } from '../types/board'
+import type { Column, Task, TaskPriority } from '../types/board'
 import './TaskModal.scss'
 
 interface TaskModalProps {
@@ -8,6 +8,10 @@ interface TaskModalProps {
   onClose: () => void
   columns: Column[]
   initialColumnId?: string
+  taskToEdit?: {
+    task: Task
+    columnId: string
+  } | null
 }
 
 const defaultForm = {
@@ -20,8 +24,9 @@ const defaultForm = {
   columnId: '',
 }
 
-export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskModalProps) {
+export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdit }: TaskModalProps) {
   const addTask = useBoardStore((state) => state.addTask)
+  const updateTask = useBoardStore((state) => state.updateTask)
   const [form, setForm] = useState(defaultForm)
   const [showDescriptionField, setShowDescriptionField] = useState(false)
   const titleInputRef = useRef<HTMLInputElement>(null)
@@ -29,12 +34,31 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
     () => columns.map((column) => ({ id: column.id, title: column.title })),
     [columns]
   )
+  const isEditMode = Boolean(taskToEdit)
 
   useEffect(() => {
     if (!isOpen) return
+    if (taskToEdit) {
+      setForm({
+        title: taskToEdit.task.title,
+        description: taskToEdit.task.description ?? '',
+        priority: taskToEdit.task.priority,
+        dueDate: taskToEdit.task.dueDate ?? '',
+        tags: taskToEdit.task.tags?.join(', ') ?? '',
+        assigneeName: taskToEdit.task.assignee.name,
+        columnId: taskToEdit.columnId,
+      })
+      setShowDescriptionField(Boolean(taskToEdit.task.description))
+      return
+    }
+
     const fallbackColumn = initialColumnId || columnOptions[0]?.id || ''
-    setForm((prev) => ({ ...prev, columnId: fallbackColumn }))
-  }, [isOpen, initialColumnId, columnOptions])
+    setForm({
+      ...defaultForm,
+      columnId: fallbackColumn,
+    })
+    setShowDescriptionField(false)
+  }, [isOpen, initialColumnId, columnOptions, taskToEdit])
 
   useEffect(() => {
     if (!isOpen) return
@@ -76,18 +100,38 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
         .map((chunk) => chunk[0]?.toUpperCase() ?? '')
         .join('') || '??'
 
-    addTask(form.columnId, {
-      title: form.title,
-      description: descriptionValue || undefined,
-      priority: form.priority,
-      dueDate: form.dueDate || undefined,
-      tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()) : undefined,
-      assignee: {
-        name: form.assigneeName || 'Без исполнителя',
-        initials,
-      },
-      subtasks: { completed: 0, total: 0 },
-    })
+    if (isEditMode && taskToEdit) {
+      updateTask({
+        taskId: taskToEdit.task.id,
+        fromColumnId: taskToEdit.columnId,
+        toColumnId: form.columnId,
+        patch: {
+          title: form.title,
+          description: descriptionValue || undefined,
+          priority: form.priority,
+          dueDate: form.dueDate || undefined,
+          tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
+          assignee: {
+            name: form.assigneeName || 'Без исполнителя',
+            initials,
+          },
+        },
+      })
+    } else {
+      addTask(form.columnId, {
+        title: form.title,
+        description: descriptionValue || undefined,
+        priority: form.priority,
+        dueDate: form.dueDate || undefined,
+        tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
+        assignee: {
+          name: form.assigneeName || 'Без исполнителя',
+          initials,
+        },
+        subtasks: taskToEdit?.task.subtasks ?? { completed: 0, total: 0 },
+      })
+    }
+
     setForm(defaultForm)
     setShowDescriptionField(false)
     onClose()
@@ -108,7 +152,9 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
     >
       <div className="task-modal">
         <div className="task-modal__header">
-          <h2 className="task-modal__title">Новая задача</h2>
+          <h2 className="task-modal__title">
+            {isEditMode ? 'Редактировать задачу' : 'Новая задача'}
+          </h2>
           <button className="task-modal__close-btn" onClick={onClose} aria-label="Закрыть">
             ×
           </button>
@@ -230,7 +276,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId }: TaskMod
               Отмена
             </button>
             <button className="btn btn_type_primary" type="submit">
-              Добавить задачу
+              {isEditMode ? 'Сохранить изменения' : 'Добавить задачу'}
             </button>
           </div>
         </form>

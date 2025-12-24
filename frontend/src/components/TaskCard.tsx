@@ -3,6 +3,8 @@ import './TaskCard.scss'
 
 interface TaskCardProps {
   task: Task
+  columnId: string
+  onEdit?: (task: Task, columnId: string) => void
 }
 
 const PRIORITY_CLASS_MAP: Record<TaskPriority, string> = {
@@ -22,10 +24,12 @@ const formatDueDate = (raw?: string) => {
   return raw
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({ task, columnId, onEdit }: TaskCardProps) {
   const subtaskLabel = task.subtasks
     ? `${task.subtasks.completed}/${task.subtasks.total} подзадач`
     : 'Нет подзадач'
+  const isEditAvailable = typeof onEdit === 'function'
+  const showHeaderActions = Boolean(task.dueDate || isEditAvailable)
 
   return (
     <article className="task-card">
@@ -37,8 +41,22 @@ export function TaskCard({ task }: TaskCardProps) {
               ? 'Средний'
               : 'Низкий'}
         </span>
-        {task.dueDate && (
-          <span className="task-card__due-date">до {formatDueDate(task.dueDate)}</span>
+        {showHeaderActions && (
+          <div className="task-card__header-actions">
+            {task.dueDate && (
+              <span className="task-card__due-date">до {formatDueDate(task.dueDate)}</span>
+            )}
+            {isEditAvailable && (
+              <button
+                type="button"
+                className="task-card__edit-btn"
+                onClick={() => onEdit?.(task, columnId)}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                Изменить
+              </button>
+            )}
+          </div>
         )}
       </div>
 

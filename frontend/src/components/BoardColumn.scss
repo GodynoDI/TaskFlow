@@ -16,6 +16,7 @@
     justify-content: space-between;
     font-weight: 600;
     color: var(--color-black);
+    gap: 12px;
 
     &.board-column__header_drag-handle {
       cursor: grab;
@@ -24,6 +25,13 @@
       &:active {
         cursor: grabbing;
       }
+    }
+
+    &-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
     }
   }
 
@@ -48,6 +56,23 @@
     font-size: 0.85rem;
     color: var(--color-gray);
     font-variant-numeric: tabular-nums;
+  }
+
+  &__edit-btn {
+    border: 1px solid var(--color-border-soft);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: transparent;
+    color: var(--color-gray-dark);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-accent-primary);
+      color: var(--color-accent-primary);
+      background: rgba(109, 94, 252, 0.08);
+    }
   }
 
   &__task-list {
