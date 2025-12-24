@@ -1,3 +1,4 @@
+import { arrayMove } from '@dnd-kit/sortable'
 import { create } from 'zustand'
 import type { Board } from '../types/board'
 
@@ -75,6 +76,13 @@ interface BoardState {
     task: Omit<Board['columns'][number]['tasks'][number], 'id'>
   ) => void
   addColumn: (title: string, accentColor?: string) => void
+  moveColumn: (activeId: string, overId: string) => void
+  moveTask: (
+    taskId: string,
+    sourceColumnId: string,
+    targetColumnId: string,
+    targetTaskId?: string
+  ) => void
 }
 
 export const useBoardStore = create<BoardState>((set) => ({
@@ -116,6 +124,71 @@ export const useBoardStore = create<BoardState>((set) => ({
           tasks: [],
         }
         return { ...board, columns: [...board.columns, newColumn] }
+      })
+
+      return { boards }
+    }),
+  moveColumn: (activeId, overId) =>
+    set((state) => {
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+        const fromIndex = board.columns.findIndex((column) => column.id === activeId)
+        const toIndex = board.columns.findIndex((column) => column.id === overId)
+        if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return board
+        return {
+          ...board,
+          columns: arrayMove(board.columns, fromIndex, toIndex),
+        }
+      })
+      return { boards }
+    }),
+  moveTask: (taskId, sourceColumnId, targetColumnId, targetTaskId) =>
+    set((state) => {
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+
+        const columnsCopy = board.columns.map((column) => ({
+          ...column,
+          tasks: [...column.tasks],
+        }))
+
+        const sourceIndex = columnsCopy.findIndex((column) => column.id === sourceColumnId)
+        const targetIndex = columnsCopy.findIndex((column) => column.id === targetColumnId)
+
+        if (sourceIndex === -1 || targetIndex === -1) {
+          return board
+        }
+
+        const sourceColumn = columnsCopy[sourceIndex]
+        const targetColumn = columnsCopy[targetIndex]
+
+        const taskIndex = sourceColumn.tasks.findIndex((task) => task.id === taskId)
+        if (taskIndex === -1) {
+          return board
+        }
+
+        if (targetTaskId && taskId === targetTaskId) {
+          return board
+        }
+
+        const [task] = sourceColumn.tasks.splice(taskIndex, 1)
+
+        let insertIndex = targetTaskId
+          ? targetColumn.tasks.findIndex((task) => task.id === targetTaskId)
+          : targetColumn.tasks.length
+
+        if (insertIndex === -1) {
+          insertIndex = targetColumn.tasks.length
+        }
+
+        const isSameColumn = sourceColumnId === targetColumnId
+        if (isSameColumn && taskIndex < insertIndex) {
+          insertIndex -= 1
+        }
+
+        targetColumn.tasks.splice(insertIndex, 0, task)
+
+        return { ...board, columns: columnsCopy }
       })
 
       return { boards }

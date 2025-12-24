@@ -1,3 +1,4 @@
+import type { HTMLAttributes, ReactNode } from 'react'
 import type { Column, Task } from '../types/board'
 import { TaskCard } from './TaskCard'
 import './BoardColumn.scss'
@@ -6,15 +7,29 @@ interface BoardColumnProps {
   column: Column
   tasks?: Task[]
   originalTaskCount?: number
+  taskListSlot?: ReactNode
+  dragHandleProps?: HTMLAttributes<HTMLElement>
 }
 
-export function BoardColumn({ column, tasks, originalTaskCount }: BoardColumnProps) {
+export function BoardColumn({
+  column,
+  tasks,
+  originalTaskCount,
+  taskListSlot,
+  dragHandleProps,
+}: BoardColumnProps) {
   const visibleTasks = tasks ?? column.tasks
   const totalTasks = originalTaskCount ?? column.tasks.length
+  const headerClassName = [
+    'board-column__header',
+    dragHandleProps ? 'board-column__header_drag-handle' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <section className="board-column">
-      <header className="board-column__header">
+      <header className={headerClassName} {...dragHandleProps}>
         <div className="board-column__pill">
           <span
             className="board-column__pill-dot"
@@ -27,7 +42,9 @@ export function BoardColumn({ column, tasks, originalTaskCount }: BoardColumnPro
         </span>
       </header>
 
-      {visibleTasks.length === 0 ? (
+      {taskListSlot ? (
+        taskListSlot
+      ) : visibleTasks.length === 0 ? (
         <div className="board-column__empty">
           <p>Нет задач</p>
           <small>Измените фильтры или добавьте новую задачу</small>

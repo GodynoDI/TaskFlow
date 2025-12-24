@@ -1,10 +1,27 @@
 import { useMemo, useState } from 'react'
-import { BoardColumn } from './components/BoardColumn'
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { TaskModal } from './components/TaskModal'
 import { BoardToolbar } from './components/BoardToolbar'
 import { AddColumnButton } from './components/AddColumnButton'
 import { BoardEmptyState } from './components/BoardEmptyState'
 import { ColumnModal } from './components/ColumnModal'
+import { SortableColumn } from './components/SortableColumn'
+import { SortableTaskCard } from './components/SortableTaskCard'
+import { ColumnTaskDropZone } from './components/ColumnTaskDropZone'
 import { useBoardStore } from './store/boardStore'
 import type { TaskPriority } from './types/board'
 import type { PriorityFilter, SortMode } from './types/filters'
@@ -16,8 +33,12 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all')
   const [sortMode, setSortMode] = useState<SortMode>('priority')
-  const { boards, activeBoardId, addColumn } = useBoardStore()
+  const { boards, activeBoardId, addColumn, moveColumn, moveTask } = useBoardStore()
   const activeBoard = boards.find((board) => board.id === activeBoardId)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
 
   const filteredColumns = useMemo(() => {
     if (!activeBoard) return []
@@ -92,6 +113,42 @@ function App() {
     setColumnModalOpen(false)
   }
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!active || !over) return
+
+    const activeType = active.data.current?.type
+
+    if (activeType === 'column') {
+      const overId = String(over.id)
+      if (overId && overId !== active.id) {
+        moveColumn(String(active.id), overId)
+      }
+      return
+    }
+
+    if (activeType === 'task') {
+      const sourceColumnId = active.data.current?.columnId as string | undefined
+      if (!sourceColumnId) return
+
+      let targetColumnId = sourceColumnId
+      let targetTaskId: string | undefined
+
+      const overData = over.data.current
+
+      if (overData?.type === 'task') {
+        targetColumnId = overData.columnId
+        targetTaskId = String(over.id)
+      } else if (overData?.type === 'task-droppable') {
+        targetColumnId = overData.columnId
+      } else if (typeof over.id === 'string') {
+        targetColumnId = over.id
+      }
+
+      moveTask(String(active.id), sourceColumnId, targetColumnId, targetTaskId)
+    }
+  }
+
   if (!activeBoard) {
     return (
       <div className="board-page">
@@ -130,15 +187,43 @@ function App() {
         totalTasks={totalTasks}
       />
       <main className="board-page__columns" role="list">
-        {filteredColumns.map(({ column, tasks, originalTaskCount }) => (
-          <BoardColumn
-            key={column.id}
-            column={column}
-            tasks={tasks}
-            originalTaskCount={originalTaskCount}
-          />
-        ))}
-        <AddColumnButton onClick={() => setColumnModalOpen(true)} />
+        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={filteredColumns.map(({ column }) => column.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {filteredColumns.map(({ column, tasks, originalTaskCount }) => (
+              <SortableColumn
+                key={column.id}
+                column={column}
+                tasks={tasks}
+                originalTaskCount={originalTaskCount}
+                taskListSlot={
+                  <ColumnTaskDropZone columnId={column.id}>
+                    {tasks.length === 0 ? (
+                      <div className="board-column__empty">
+                        <p>Нет задач</p>
+                        <small>Измените фильтры или добавьте новую задачу</small>
+                      </div>
+                    ) : (
+                      <SortableContext
+                        items={tasks.map((task) => task.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="board-column__task-list">
+                          {tasks.map((task) => (
+                            <SortableTaskCard key={task.id} task={task} columnId={column.id} />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    )}
+                  </ColumnTaskDropZone>
+                }
+              />
+            ))}
+          </SortableContext>
+          <AddColumnButton onClick={() => setColumnModalOpen(true)} />
+        </DndContext>
       </main>
       {showBoardEmptyState && (
         <BoardEmptyState

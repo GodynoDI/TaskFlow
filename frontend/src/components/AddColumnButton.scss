@@ -21,18 +21,18 @@
     transform: translateY(-2px);
   }
 
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    font-size: 1.2rem;
+  }
+
   @media (max-width: 768px) {
     width: 280px;
     flex: 0 0 280px;
   }
-}
-
-.add-column-button__icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid currentColor;
-  font-size: 1.2rem;
 }
