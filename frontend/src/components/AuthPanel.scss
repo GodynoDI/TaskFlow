@@ -1,0 +1,117 @@
+.auth-panel {
+  width: min(420px, 100%);
+  background: var(--color-paper);
+  border-radius: 28px;
+  padding: 36px;
+  box-shadow: 0 35px 70px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-black);
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: color-mix(in srgb, var(--color-gray) 90%, var(--color-black));
+  }
+
+  &__switch {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border-soft);
+    font-size: 0.9rem;
+    color: var(--color-gray);
+  }
+
+  &__switch-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-accent-primary);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-size: 0.85rem;
+      color: var(--color-gray);
+    }
+
+    input {
+      border: 1px solid var(--color-border-soft);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+
+      &[aria-invalid='true'] {
+        border-color: var(--color-accent-danger);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-accent-primary);
+      }
+    }
+  }
+
+  &__error {
+    color: var(--color-accent-danger);
+    font-size: 0.78rem;
+  }
+
+  &__submit-error {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 16px;
+    padding: 10px 14px;
+    color: var(--color-accent-danger);
+    font-size: 0.85rem;
+  }
+
+  &__submit {
+    border: none;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-accent-primary), #7b7bff);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    &:not(:disabled):hover {
+      transform: translateY(-1px);
+    }
+  }
+}

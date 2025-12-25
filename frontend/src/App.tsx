@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   DndContext,
   type DragEndEvent,
@@ -22,6 +22,13 @@ import { ColumnModal } from './components/ColumnModal'
 import { SortableColumn } from './components/SortableColumn'
 import { SortableTaskCard } from './components/SortableTaskCard'
 import { ColumnTaskDropZone } from './components/ColumnTaskDropZone'
+import {
+  AuthPanel,
+  type AuthFormMode,
+  type AuthResult,
+  type LoginPayload,
+  type RegisterPayload,
+} from './components/AuthPanel'
 import { useBoardStore } from './store/boardStore'
 import type { Column, Task, TaskPriority } from './types/board'
 import type { PriorityFilter, SortMode } from './types/filters'
@@ -35,6 +42,9 @@ function App() {
   const [sortMode, setSortMode] = useState<SortMode>('priority')
   const [taskToEdit, setTaskToEdit] = useState<{ task: Task; columnId: string } | null>(null)
   const [columnToEdit, setColumnToEdit] = useState<Column | null>(null)
+  const [authMode, setAuthMode] = useState<AuthFormMode>('login')
+  const [currentUser, setCurrentUser] = useState<{ fullName: string; email: string } | null>(null)
+  const [users, setUsers] = useState<Record<string, { fullName: string; password: string }>>({})
   const { boards, activeBoardId, addColumn, updateColumn, moveColumn, moveTask } = useBoardStore()
   const activeBoard = boards.find((board) => board.id === activeBoardId)
   const sensors = useSensors(
@@ -104,6 +114,57 @@ function App() {
       }
     })
   }, [activeBoard, priorityFilter, searchQuery, sortMode])
+
+  const handleLogin = useCallback(
+    async ({ email, password }: LoginPayload): Promise<AuthResult> => {
+      const normalizedEmail = email.trim().toLowerCase()
+      const user = users[normalizedEmail]
+      if (!user || user.password !== password) {
+        return { success: false, message: 'Неверный email или пароль' }
+      }
+      setCurrentUser({ fullName: user.fullName, email: normalizedEmail })
+      return { success: true }
+    },
+    [users]
+  )
+
+  const handleRegister = useCallback(
+    async ({ fullName, email, password }: RegisterPayload): Promise<AuthResult> => {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (users[normalizedEmail]) {
+        return { success: false, message: 'Email уже зарегистрирован' }
+      }
+      const formattedName = fullName.trim()
+      setUsers((prev) => ({
+        ...prev,
+        [normalizedEmail]: { fullName: formattedName, password },
+      }))
+      setCurrentUser({ fullName: formattedName, email: normalizedEmail })
+      return { success: true }
+    },
+    [users]
+  )
+
+  const handleSignOut = useCallback(() => {
+    setCurrentUser(null)
+    setTaskModalOpen(false)
+    setColumnModalOpen(false)
+    setTaskToEdit(null)
+    setColumnToEdit(null)
+    setAuthMode('login')
+  }, [])
+
+  const userInitials = useMemo(() => {
+    if (!currentUser) return ''
+    return (
+      currentUser.fullName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((chunk) => chunk[0]?.toUpperCase() ?? '')
+        .join('') || currentUser.email[0]?.toUpperCase() || '?'
+    )
+  }, [currentUser])
 
   const totalTasks = activeBoard?.columns.reduce((acc, column) => acc + column.tasks.length, 0) ?? 0
   const visibleTasks = filteredColumns.reduce((acc, entry) => acc + entry.tasks.length, 0)
@@ -180,6 +241,19 @@ function App() {
     }
   }
 
+  if (!currentUser) {
+    return (
+      <div className="auth-page">
+        <AuthPanel
+          mode={authMode}
+          onModeChange={setAuthMode}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+        />
+      </div>
+    )
+  }
+
   if (!activeBoard) {
     return (
       <div className="board-page">
@@ -204,6 +278,18 @@ function App() {
           <button className="btn btn_type_primary" onClick={handleOpenCreateTaskModal}>
             + Добавить задачу
           </button>
+          <div className="board-page__user">
+            <div className="board-page__user-avatar" aria-hidden="true">
+              {userInitials}
+            </div>
+            <div className="board-page__user-meta">
+              <span className="board-page__user-name">{currentUser.fullName}</span>
+              <span className="board-page__user-email">{currentUser.email}</span>
+            </div>
+            <button type="button" className="board-page__logout-btn" onClick={handleSignOut}>
+              Выйти
+            </button>
+          </div>
         </div>
       </header>
       <BoardToolbar
