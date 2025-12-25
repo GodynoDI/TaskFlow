@@ -1,0 +1,48 @@
+.revealable-section {
+  border: 1px solid var(--color-border-soft);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(248, 245, 242, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--color-gray-dark);
+  }
+
+  &__close {
+    border: none;
+    background: transparent;
+    color: var(--color-gray);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__trigger {
+    width: 100%;
+    border: 1px dashed rgba(15, 23, 42, 0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: rgba(248, 245, 242, 0.6);
+    color: var(--color-gray);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: border-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-accent-primary);
+      color: var(--color-accent-primary);
+    }
+  }
+}

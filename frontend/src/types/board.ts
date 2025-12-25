@@ -1,5 +1,11 @@
 export type TaskPriority = 'high' | 'medium' | 'low'
 
+export interface TaskSubtask {
+  id: string
+  title: string
+  isDone: boolean
+}
+
 export interface Task {
   id: string
   title: string
@@ -11,10 +17,7 @@ export interface Task {
     name: string
     initials: string
   }
-  subtasks?: {
-    completed: number
-    total: number
-  }
+  subtasks?: TaskSubtask[]
 }
 
 export interface Column {

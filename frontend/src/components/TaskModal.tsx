@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBoardStore } from '../store/boardStore'
-import type { Column, Task, TaskPriority } from '../types/board'
+import type { Column, Task, TaskPriority, TaskSubtask } from '../types/board'
+import { RevealableSection } from './RevealableSection'
 import './TaskModal.scss'
 
 interface TaskModalProps {
@@ -19,7 +20,6 @@ const defaultForm = {
   description: '',
   priority: 'medium' as TaskPriority,
   dueDate: '',
-  tags: '',
   assigneeName: '',
   columnId: '',
 }
@@ -28,7 +28,13 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
   const addTask = useBoardStore((state) => state.addTask)
   const updateTask = useBoardStore((state) => state.updateTask)
   const [form, setForm] = useState(defaultForm)
-  const [showDescriptionField, setShowDescriptionField] = useState(false)
+  const [isDescriptionOpen, setDescriptionOpen] = useState(false)
+  const [isSubtasksOpen, setSubtasksOpen] = useState(false)
+  const [isTagsOpen, setTagsOpen] = useState(false)
+  const [subtasks, setSubtasks] = useState<TaskSubtask[]>([])
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [newTagTitle, setNewTagTitle] = useState('')
   const titleInputRef = useRef<HTMLInputElement>(null)
   const columnOptions = useMemo(
     () => columns.map((column) => ({ id: column.id, title: column.title })),
@@ -44,11 +50,16 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
         description: taskToEdit.task.description ?? '',
         priority: taskToEdit.task.priority,
         dueDate: taskToEdit.task.dueDate ?? '',
-        tags: taskToEdit.task.tags?.join(', ') ?? '',
         assigneeName: taskToEdit.task.assignee.name,
         columnId: taskToEdit.columnId,
       })
-      setShowDescriptionField(Boolean(taskToEdit.task.description))
+      setDescriptionOpen(Boolean(taskToEdit.task.description))
+      setSubtasks(taskToEdit.task.subtasks ?? [])
+      setSubtasksOpen(Boolean(taskToEdit.task.subtasks?.length))
+      setTags(taskToEdit.task.tags ?? [])
+      setTagsOpen(Boolean(taskToEdit.task.tags?.length))
+      setNewSubtaskTitle('')
+      setNewTagTitle('')
       return
     }
 
@@ -57,7 +68,13 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
       ...defaultForm,
       columnId: fallbackColumn,
     })
-    setShowDescriptionField(false)
+    setDescriptionOpen(false)
+    setSubtasksOpen(false)
+    setSubtasks([])
+    setNewSubtaskTitle('')
+    setTags([])
+    setTagsOpen(false)
+    setNewTagTitle('')
   }, [isOpen, initialColumnId, columnOptions, taskToEdit])
 
   useEffect(() => {
@@ -91,7 +108,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!form.columnId) return
-    const descriptionValue = showDescriptionField ? form.description.trim() : ''
+    const descriptionValue = isDescriptionOpen ? form.description.trim() : ''
     const initials =
       form.assigneeName
         .split(' ')
@@ -99,6 +116,13 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
         .slice(0, 2)
         .map((chunk) => chunk[0]?.toUpperCase() ?? '')
         .join('') || '??'
+
+    const normalizedSubtasks = subtasks.map((subtask) => ({
+      ...subtask,
+      id: subtask.id || crypto.randomUUID(),
+      title: subtask.title.trim(),
+    }))
+    const normalizedTags = tags.map((tag) => tag.trim()).filter(Boolean)
 
     if (isEditMode && taskToEdit) {
       updateTask({
@@ -110,11 +134,12 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
           description: descriptionValue || undefined,
           priority: form.priority,
           dueDate: form.dueDate || undefined,
-          tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
+          tags: normalizedTags.length ? normalizedTags : undefined,
           assignee: {
             name: form.assigneeName || 'Без исполнителя',
             initials,
           },
+          subtasks: normalizedSubtasks,
         },
       })
     } else {
@@ -123,18 +148,63 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
         description: descriptionValue || undefined,
         priority: form.priority,
         dueDate: form.dueDate || undefined,
-        tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
+        tags: normalizedTags.length ? normalizedTags : undefined,
         assignee: {
           name: form.assigneeName || 'Без исполнителя',
           initials,
         },
-        subtasks: taskToEdit?.task.subtasks ?? { completed: 0, total: 0 },
+        subtasks: normalizedSubtasks,
       })
     }
 
     setForm(defaultForm)
-    setShowDescriptionField(false)
+    setDescriptionOpen(false)
+    setSubtasksOpen(false)
+    setSubtasks([])
+    setNewSubtaskTitle('')
+    setTags([])
+    setTagsOpen(false)
+    setNewTagTitle('')
     onClose()
+  }
+
+  const handleAddSubtask = () => {
+    const trimmed = newSubtaskTitle.trim()
+    if (!trimmed) return
+    setSubtasks((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        title: trimmed,
+        isDone: false,
+      },
+    ])
+    setNewSubtaskTitle('')
+    setSubtasksOpen(true)
+  }
+
+  const handleToggleSubtask = (subtaskId: string) => {
+    setSubtasks((prev) =>
+      prev.map((subtask) =>
+        subtask.id === subtaskId ? { ...subtask, isDone: !subtask.isDone } : subtask
+      )
+    )
+  }
+
+  const handleRemoveSubtask = (subtaskId: string) => {
+    setSubtasks((prev) => prev.filter((subtask) => subtask.id !== subtaskId))
+  }
+
+  const handleAddTag = () => {
+    const trimmed = newTagTitle.trim()
+    if (!trimmed) return
+    setTags((prev) => [...prev, trimmed])
+    setNewTagTitle('')
+    setTagsOpen(true)
+  }
+
+  const handleRemoveTag = (indexToRemove: number) => {
+    setTags((prev) => prev.filter((_, index) => index !== indexToRemove))
   }
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -174,36 +244,123 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
             />
           </div>
 
-          {showDescriptionField ? (
+          <RevealableSection
+            isOpen={isDescriptionOpen}
+            title="Описание"
+            triggerLabel="+ Добавить описание"
+            onOpen={() => setDescriptionOpen(true)}
+            onClose={() => setDescriptionOpen(false)}
+          >
             <div className="task-modal__field">
-              <label htmlFor="description">Описание</label>
-              <div className="task-modal__description-wrapper">
-                <textarea
-                  id="description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  placeholder="Кратко опишите задачу"
-                />
-                <button
-                  type="button"
-                  className="task-modal__icon-btn task-modal__description-close"
-                  aria-label="Свернуть описание"
-                  onClick={() => setShowDescriptionField(false)}
-                >
-                  ×
-                </button>
-              </div>
+              <textarea
+                id="description"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Кратко опишите задачу"
+              />
             </div>
-          ) : (
-            <button
-              type="button"
-              className="task-modal__add-description-btn"
-              onClick={() => setShowDescriptionField(true)}
-            >
-              + Добавить описание
-            </button>
-          )}
+          </RevealableSection>
+
+          <RevealableSection
+            isOpen={isSubtasksOpen}
+            title="Подзадачи"
+            triggerLabel="+ Добавить подзадачу"
+            onOpen={() => setSubtasksOpen(true)}
+            onClose={() => setSubtasksOpen(false)}
+          >
+            <ul className="task-modal__subtasks">
+              {subtasks.map((subtask) => (
+                <li
+                  key={subtask.id}
+                  className={[
+                    'task-modal__subtask-item',
+                    subtask.isDone ? 'task-modal__subtask-item_state_done' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <label className="task-modal__subtask-label">
+                    <input
+                      type="checkbox"
+                      checked={subtask.isDone}
+                      onChange={() => handleToggleSubtask(subtask.id)}
+                      className="task-modal__subtask-checkbox"
+                    />
+                    <span className="task-modal__subtask-text">{subtask.title}</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="task-modal__subtask-remove"
+                    aria-label="Удалить подзадачу"
+                    onClick={() => handleRemoveSubtask(subtask.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="task-modal__subtask-input">
+              <input
+                type="text"
+                value={newSubtaskTitle}
+                onChange={(event) => setNewSubtaskTitle(event.target.value)}
+                placeholder="Название подзадачи"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    handleAddSubtask()
+                  }
+                }}
+              />
+              <button type="button" onClick={handleAddSubtask}>
+                Добавить
+              </button>
+            </div>
+          </RevealableSection>
+
+          <RevealableSection
+            isOpen={isTagsOpen}
+            title="Теги"
+            triggerLabel="+ Добавить тег"
+            onOpen={() => setTagsOpen(true)}
+            onClose={() => setTagsOpen(false)}
+          >
+            {tags.length > 0 && (
+              <ul className="task-modal__tags">
+                {tags.map((tag, index) => (
+                  <li key={`${tag}-${index}`} className="task-modal__tag">
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      aria-label="Удалить тег"
+                      className="task-modal__tag-remove"
+                      onClick={() => handleRemoveTag(index)}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="task-modal__tag-input">
+              <input
+                type="text"
+                value={newTagTitle}
+                onChange={(event) => setNewTagTitle(event.target.value)}
+                placeholder="Название тега"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    handleAddTag()
+                  }
+                }}
+              />
+              <button type="button" onClick={handleAddTag}>
+                Добавить
+              </button>
+            </div>
+          </RevealableSection>
 
           <div className="task-modal__row task-modal__row_layout_compact">
             <div className="task-modal__field">
@@ -245,17 +402,6 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
                 type="date"
                 value={form.dueDate}
                 onChange={handleChange}
-              />
-            </div>
-
-            <div className="task-modal__field">
-              <label htmlFor="tags">Теги</label>
-              <input
-                id="tags"
-                name="tags"
-                value={form.tags}
-                onChange={handleChange}
-                placeholder="ui, карточки"
               />
             </div>
 

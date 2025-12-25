@@ -14,13 +14,17 @@ const mockBoard: Board = {
       tasks: [
         {
           id: 'task-1',
-          title: '1',
-          description: '1',
+          title: 'Задача 1',
+          description: 'Описание 1',
           priority: 'medium',
-          dueDate: '1',
-          tags: ['task1', 'col1'],
-          assignee: { name: '11111111', initials: '1' },
-          subtasks: { completed: 1, total: 3 },
+          dueDate: '2025-01-15',
+          tags: ['тег 1'],
+          assignee: { name: 'Исполнитель 1', initials: 'И1' },
+          subtasks: [
+            { id: 'task-1-sub-1', title: 'Подзадача 1', isDone: true },
+            { id: 'task-1-sub-2', title: 'Подзадача 2', isDone: false },
+            { id: 'task-1-sub-3', title: 'Подзадача 3', isDone: false },
+          ],
         },
       ],
     },
@@ -31,19 +35,26 @@ const mockBoard: Board = {
       tasks: [
         {
           id: 'task-2',
-          title: '2',
-          description: '2',
+          title: 'Задача 2',
+          description: 'Описание 2',
           priority: 'high',
-          assignee: { name: '22222222', initials: '2' },
-          subtasks: { completed: 2, total: 4 },
+          assignee: { name: 'Исполнитель 2', initials: 'И2' },
+          subtasks: [
+            { id: 'task-2-sub-1', title: 'Подзадача 1', isDone: true },
+            { id: 'task-2-sub-2', title: 'Подзадача 2', isDone: false },
+            { id: 'task-2-sub-3', title: 'Подзадача 3', isDone: false },
+          ],
         },
         {
           id: 'task-3',
-          title: '3',
+          title: 'Задача 3',
           priority: 'low',
-          tags: ['task3'],
-          assignee: { name: '3333333', initials: '3' },
-          subtasks: { completed: 0, total: 2 },
+          tags: ['тег 2'],
+          assignee: { name: 'Исполнитель 3', initials: 'И3' },
+          subtasks: [
+            { id: 'task-3-sub-1', title: 'Подзадача 1', isDone: false },
+            { id: 'task-3-sub-2', title: 'Подзадача 2', isDone: false },
+          ],
         },
       ],
     },
@@ -54,12 +65,16 @@ const mockBoard: Board = {
       tasks: [
         {
           id: 'task-4',
-          title: '4',
-          description: '4',
+          title: 'Задача 4',
+          description: 'Описание 4',
           priority: 'low',
-          tags: ['col3'],
-          assignee: { name: '44444444444', initials: '4' },
-          subtasks: { completed: 3, total: 4 },
+          tags: ['тег 3'],
+          assignee: { name: 'Исполнитель 4', initials: 'И4' },
+          subtasks: [
+            { id: 'task-4-sub-1', title: 'Подзадача 1', isDone: true },
+            { id: 'task-4-sub-2', title: 'Подзадача 2', isDone: true },
+            { id: 'task-4-sub-3', title: 'Подзадача 3', isDone: true },
+          ],
         },
       ],
     },
@@ -80,6 +95,12 @@ interface BoardState {
     toColumnId?: string
     patch: Partial<Omit<BoardTask, 'id'>>
   }) => void
+  toggleSubtask: (params: {
+    columnId: string
+    taskId: string
+    subtaskId: string
+    isDone: boolean
+  }) => void
   addColumn: (title: string, accentColor?: string) => void
   updateColumn: (columnId: string, payload: { title?: string; accentColor?: string }) => void
   moveColumn: (activeId: string, overId: string) => void
@@ -98,7 +119,14 @@ export const useBoardStore = create<BoardState>((set) => ({
   setActiveBoard: (boardId) => set({ activeBoardId: boardId }),
   addTask: (columnId, task) =>
     set((state) => {
-      const newTask = { ...task, id: crypto.randomUUID() }
+      const newTask: BoardTask = {
+        ...task,
+        id: crypto.randomUUID(),
+        subtasks: task.subtasks?.map((subtask) => ({
+          ...subtask,
+          id: subtask.id || crypto.randomUUID(),
+        })),
+      }
       const boards = state.boards.map((board) => {
         if (board.id !== state.activeBoardId) return board
         return {
@@ -110,6 +138,32 @@ export const useBoardStore = create<BoardState>((set) => ({
           ),
         }
       })
+      return { boards }
+    }),
+  toggleSubtask: ({ columnId, taskId, subtaskId, isDone }) =>
+    set((state) => {
+      const boards = state.boards.map((board) => {
+        if (board.id !== state.activeBoardId) return board
+
+        const columns = board.columns.map((column) => {
+          if (column.id !== columnId) return column
+
+          const tasks = column.tasks.map((task) => {
+            if (task.id !== taskId || !task.subtasks) return task
+
+            const subtasks = task.subtasks.map((subtask) =>
+              subtask.id === subtaskId ? { ...subtask, isDone } : subtask
+            )
+
+            return { ...task, subtasks }
+          })
+
+          return { ...column, tasks }
+        })
+
+        return { ...board, columns }
+      })
+
       return { boards }
     }),
   updateColumn: (columnId, payload) =>

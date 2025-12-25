@@ -1,3 +1,4 @@
+import { useBoardStore } from '../store/boardStore'
 import type { Task, TaskPriority } from '../types/board'
 import './TaskCard.scss'
 
@@ -25,11 +26,22 @@ const formatDueDate = (raw?: string) => {
 }
 
 export function TaskCard({ task, columnId, onEdit }: TaskCardProps) {
-  const subtaskLabel = task.subtasks
-    ? `${task.subtasks.completed}/${task.subtasks.total} подзадач`
-    : 'Нет подзадач'
+  const toggleSubtask = useBoardStore((state) => state.toggleSubtask)
+  const subtaskCount = task.subtasks?.length ?? 0
+  const completedSubtasks = task.subtasks?.filter((subtask) => subtask.isDone).length ?? 0
+  const hasSubtasks = subtaskCount > 0
+  const subtaskLabel = hasSubtasks ? `${completedSubtasks}/${subtaskCount} подзадач` : 'Нет подзадач'
   const isEditAvailable = typeof onEdit === 'function'
   const showHeaderActions = Boolean(task.dueDate || isEditAvailable)
+
+  const handleSubtaskToggle = (subtaskId: string) => {
+    toggleSubtask({
+      columnId,
+      taskId: task.id,
+      subtaskId,
+      isDone: !task.subtasks?.find((subtask) => subtask.id === subtaskId)?.isDone,
+    })
+  }
 
   return (
     <article className="task-card">
@@ -66,6 +78,32 @@ export function TaskCard({ task, columnId, onEdit }: TaskCardProps) {
           <p className="task-card__description">{task.description}</p>
         )}
       </div>
+
+      {hasSubtasks && (
+        <ul className="task-card__subtask-list">
+          {task.subtasks!.map((subtask) => (
+            <li
+              key={subtask.id}
+              className={[
+                'task-card__subtask',
+                subtask.isDone ? 'task-card__subtask_state_done' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <label className="task-card__subtask-label">
+                <input
+                  type="checkbox"
+                  className="task-card__subtask-checkbox"
+                  checked={subtask.isDone}
+                  onChange={() => handleSubtaskToggle(subtask.id)}
+                />
+                <span className="task-card__subtask-text">{subtask.title}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {task.tags && task.tags.length > 0 && (
         <div className="task-card__tag-list">
