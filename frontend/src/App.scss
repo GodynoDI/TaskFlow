@@ -1,7 +1,7 @@
-@import './components/BoardToolbar.scss';
-@import './components/AddColumnButton.scss';
-@import './components/BoardEmptyState.scss';
-@import './components/AuthPanel.scss';
+@use './components/BoardToolbar.scss';
+@use './components/AddColumnButton.scss';
+@use './components/BoardEmptyState.scss';
+@use './components/AuthPanel.scss';
 
 .auth-page {
   min-height: 100vh;
