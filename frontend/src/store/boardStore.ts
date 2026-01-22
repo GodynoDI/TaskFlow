@@ -1,309 +1,201 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import { create } from 'zustand'
 import type { Board } from '../types/board'
-
-const mockBoard: Board = {
-  id: 'board-default',
-  title: 'TaskFlow',
-  description: 'Доска-досточка',
-  columns: [
-    {
-      id: 'col-1',
-      title: 'бэклог',
-      accentColor: '#f2c94c',
-      tasks: [
-        {
-          id: 'task-1',
-          title: 'Задача 1',
-          description: 'Описание 1',
-          priority: 'medium',
-          dueDate: '2025-01-15',
-          tags: ['тег 1'],
-          assignee: { name: 'Исполнитель 1', initials: 'И1' },
-          subtasks: [
-            { id: 'task-1-sub-1', title: 'Подзадача 1', isDone: true },
-            { id: 'task-1-sub-2', title: 'Подзадача 2', isDone: false },
-            { id: 'task-1-sub-3', title: 'Подзадача 3', isDone: false },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'col-2',
-      title: 'В работе',
-      accentColor: '#6d5efc',
-      tasks: [
-        {
-          id: 'task-2',
-          title: 'Задача 2',
-          description: 'Описание 2',
-          priority: 'high',
-          assignee: { name: 'Исполнитель 2', initials: 'И2' },
-          subtasks: [
-            { id: 'task-2-sub-1', title: 'Подзадача 1', isDone: true },
-            { id: 'task-2-sub-2', title: 'Подзадача 2', isDone: false },
-            { id: 'task-2-sub-3', title: 'Подзадача 3', isDone: false },
-          ],
-        },
-        {
-          id: 'task-3',
-          title: 'Задача 3',
-          priority: 'low',
-          tags: ['тег 2'],
-          assignee: { name: 'Исполнитель 3', initials: 'И3' },
-          subtasks: [
-            { id: 'task-3-sub-1', title: 'Подзадача 1', isDone: false },
-            { id: 'task-3-sub-2', title: 'Подзадача 2', isDone: false },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'col-3',
-      title: 'Готово',
-      accentColor: '#10b981',
-      tasks: [
-        {
-          id: 'task-4',
-          title: 'Задача 4',
-          description: 'Описание 4',
-          priority: 'low',
-          tags: ['тег 3'],
-          assignee: { name: 'Исполнитель 4', initials: 'И4' },
-          subtasks: [
-            { id: 'task-4-sub-1', title: 'Подзадача 1', isDone: true },
-            { id: 'task-4-sub-2', title: 'Подзадача 2', isDone: true },
-            { id: 'task-4-sub-3', title: 'Подзадача 3', isDone: true },
-          ],
-        },
-      ],
-    },
-  ],
-}
+import { boardsApi } from '../api/boards'
+import { columnsApi } from '../api/columns'
+import { tasksApi } from '../api/tasks'
 
 type BoardTask = Board['columns'][number]['tasks'][number]
 
 interface BoardState {
   boards: Board[]
   activeBoardId: string | null
-  setBoards: (boards: Board[]) => void
+  isLoading: boolean
+  loadBoards: () => Promise<void>
+  loadBoard: (boardId: string) => Promise<void>
   setActiveBoard: (boardId: string) => void
-  addTask: (columnId: string, task: Omit<BoardTask, 'id'>) => void
+  addTask: (columnId: string, task: Omit<BoardTask, 'id'>) => Promise<void>
   updateTask: (params: {
     taskId: string
     fromColumnId: string
     toColumnId?: string
     patch: Partial<Omit<BoardTask, 'id'>>
-  }) => void
+  }) => Promise<void>
   toggleSubtask: (params: {
     columnId: string
     taskId: string
     subtaskId: string
     isDone: boolean
-  }) => void
-  addColumn: (title: string, accentColor?: string) => void
-  updateColumn: (columnId: string, payload: { title?: string; accentColor?: string }) => void
-  moveColumn: (activeId: string, overId: string) => void
+  }) => Promise<void>
+  addColumn: (title: string, accentColor?: string) => Promise<void>
+  updateColumn: (columnId: string, payload: { title?: string; accentColor?: string }) => Promise<void>
+  moveColumn: (activeId: string, overId: string) => Promise<void>
   moveTask: (
     taskId: string,
     sourceColumnId: string,
     targetColumnId: string,
     targetTaskId?: string
-  ) => void
+  ) => Promise<void>
 }
 
-export const useBoardStore = create<BoardState>((set) => ({
-  boards: [mockBoard],
-  activeBoardId: mockBoard.id,
-  setBoards: (boards) => set({ boards }),
-  setActiveBoard: (boardId) => set({ activeBoardId: boardId }),
-  addTask: (columnId, task) =>
-    set((state) => {
-      const newTask: BoardTask = {
-        ...task,
-        id: crypto.randomUUID(),
-        subtasks: task.subtasks?.map((subtask) => ({
-          ...subtask,
-          id: subtask.id || crypto.randomUUID(),
-        })),
+export const useBoardStore = create<BoardState>((set, get) => ({
+  boards: [],
+  activeBoardId: null,
+  isLoading: false,
+  loadBoards: async () => {
+    set({ isLoading: true })
+    try {
+      const boards = await boardsApi.getAll()
+      set({ boards, isLoading: false })
+      if (boards.length > 0 && !get().activeBoardId) {
+        set({ activeBoardId: boards[0].id })
       }
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
-        return {
-          ...board,
-          columns: board.columns.map((column) =>
-            column.id === columnId
-              ? { ...column, tasks: [newTask, ...column.tasks] }
-              : column
-          ),
+    } catch (error) {
+      console.error('Failed to load boards:', error)
+      set({ isLoading: false })
+    }
+  },
+  loadBoard: async (boardId: string) => {
+    set({ isLoading: true })
+    try {
+      const board = await boardsApi.getById(boardId)
+      set((state) => {
+        const boards = state.boards.map((b) => (b.id === boardId ? board : b))
+        if (!boards.find((b) => b.id === boardId)) {
+          boards.push(board)
         }
+        return { boards, isLoading: false }
       })
-      return { boards }
-    }),
-  toggleSubtask: ({ columnId, taskId, subtaskId, isDone }) =>
-    set((state) => {
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
+    } catch (error) {
+      console.error('Failed to load board:', error)
+      set({ isLoading: false })
+    }
+  },
+  setActiveBoard: (boardId) => set({ activeBoardId: boardId }),
+  addTask: async (columnId, task) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
 
-        const columns = board.columns.map((column) => {
-          if (column.id !== columnId) return column
-
-          const tasks = column.tasks.map((task) => {
-            if (task.id !== taskId || !task.subtasks) return task
-
-            const subtasks = task.subtasks.map((subtask) =>
-              subtask.id === subtaskId ? { ...subtask, isDone } : subtask
-            )
-
-            return { ...task, subtasks }
-          })
-
-          return { ...column, tasks }
-        })
-
-        return { ...board, columns }
+    try {
+      await tasksApi.create(boardId, columnId, {
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        tags: task.tags,
+        assigneeName: task.assignee.name,
+        assigneeInitials: task.assignee.initials,
+        subtasks: task.subtasks?.map((s) => ({ title: s.title })),
       })
 
-      return { boards }
-    }),
-  updateColumn: (columnId, payload) =>
-    set((state) => {
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to add task:', error)
+    }
+  },
+  toggleSubtask: async ({ columnId, taskId, subtaskId, isDone }) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
 
-        const columns = board.columns.map((column) =>
-          column.id === columnId ? { ...column, ...payload } : column
-        )
+    try {
+      await tasksApi.toggleSubtask(boardId, columnId, taskId, subtaskId, isDone)
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to toggle subtask:', error)
+    }
+  },
+  updateColumn: async (columnId, payload) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
 
-        return { ...board, columns }
-      })
+    try {
+      await columnsApi.update(boardId, columnId, payload)
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to update column:', error)
+    }
+  },
+  updateTask: async ({ taskId, fromColumnId, toColumnId, patch }) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
 
-      return { boards }
-    }),
-  updateTask: ({ taskId, fromColumnId, toColumnId, patch }) =>
-    set((state) => {
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
+    try {
+      const updateData: any = {
+        title: patch.title,
+        description: patch.description,
+        priority: patch.priority,
+        dueDate: patch.dueDate,
+        tags: patch.tags,
+        assigneeName: patch.assignee?.name,
+        assigneeInitials: patch.assignee?.initials,
+        columnId: toColumnId,
+      }
+      Object.keys(updateData).forEach((key) => updateData[key] === undefined && delete updateData[key])
 
-        const columnsCopy = board.columns.map((column) => ({
-          ...column,
-          tasks: [...column.tasks],
-        }))
+      await tasksApi.update(boardId, fromColumnId, taskId, updateData)
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to update task:', error)
+    }
+  },
+  addColumn: async (title, accentColor) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
 
-        const sourceIndex = columnsCopy.findIndex((column) => column.id === fromColumnId)
-        if (sourceIndex === -1) return board
-
-        const taskIndex = columnsCopy[sourceIndex].tasks.findIndex((task) => task.id === taskId)
-        if (taskIndex === -1) return board
-
-        const [task] = columnsCopy[sourceIndex].tasks.splice(taskIndex, 1)
-        const destinationColumnId = toColumnId ?? fromColumnId
-        const destinationIndex = columnsCopy.findIndex((column) => column.id === destinationColumnId)
-        if (destinationIndex === -1) {
-          // вернуть задачу обратно, если целевая колонка не найдена
-          columnsCopy[sourceIndex].tasks.splice(taskIndex, 0, task)
-          return board
-        }
-
-        const updatedTask: BoardTask = {
-          ...task,
-          ...patch,
-        }
-
-        const isSameColumn = destinationColumnId === fromColumnId
-        const insertIndex = isSameColumn ? taskIndex : 0
-        columnsCopy[destinationIndex].tasks.splice(insertIndex, 0, updatedTask)
-
-        return { ...board, columns: columnsCopy }
-      })
-
-      return { boards }
-    }),
-  addColumn: (title, accentColor) =>
-    set((state) => {
+    try {
       const palette = ['#6d5efc', '#3b82f6', '#f2c94c', '#10b981', '#f59e0b', '#ef4444']
+      const activeBoard = state.boards.find((b) => b.id === boardId)
+      const nextAccent =
+        accentColor ||
+        (activeBoard ? palette[activeBoard.columns.length % palette.length] : null) ||
+        '#6d5efc'
 
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
-        const nextAccent =
-          accentColor ||
-          palette[board.columns.length % palette.length] ||
-          '#6d5efc'
+      await columnsApi.create(boardId, { title, accentColor: nextAccent })
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to add column:', error)
+    }
+  },
+  moveColumn: async (activeId, overId) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
 
-        const newColumn = {
-          id: crypto.randomUUID(),
-          title,
-          accentColor: nextAccent,
-          tasks: [],
-        }
-        return { ...board, columns: [...board.columns, newColumn] }
+    const activeBoard = state.boards.find((b) => b.id === boardId)
+    if (!activeBoard) return
+
+    const fromIndex = activeBoard.columns.findIndex((column) => column.id === activeId)
+    const toIndex = activeBoard.columns.findIndex((column) => column.id === overId)
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return
+
+    const reorderedColumns = arrayMove(activeBoard.columns, fromIndex, toIndex)
+    const columnIds = reorderedColumns.map((col) => col.id)
+
+    try {
+      await columnsApi.reorder(boardId, columnIds)
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to move column:', error)
+    }
+  },
+  moveTask: async (taskId, sourceColumnId, targetColumnId, targetTaskId) => {
+    const state = get()
+    const boardId = state.activeBoardId
+    if (!boardId) return
+
+    try {
+      await tasksApi.move(boardId, sourceColumnId, taskId, {
+        targetColumnId,
+        targetTaskId,
       })
-
-      return { boards }
-    }),
-  moveColumn: (activeId, overId) =>
-    set((state) => {
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
-        const fromIndex = board.columns.findIndex((column) => column.id === activeId)
-        const toIndex = board.columns.findIndex((column) => column.id === overId)
-        if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return board
-        return {
-          ...board,
-          columns: arrayMove(board.columns, fromIndex, toIndex),
-        }
-      })
-      return { boards }
-    }),
-  moveTask: (taskId, sourceColumnId, targetColumnId, targetTaskId) =>
-    set((state) => {
-      const boards = state.boards.map((board) => {
-        if (board.id !== state.activeBoardId) return board
-
-        const columnsCopy = board.columns.map((column) => ({
-          ...column,
-          tasks: [...column.tasks],
-        }))
-
-        const sourceIndex = columnsCopy.findIndex((column) => column.id === sourceColumnId)
-        const targetIndex = columnsCopy.findIndex((column) => column.id === targetColumnId)
-
-        if (sourceIndex === -1 || targetIndex === -1) {
-          return board
-        }
-
-        const sourceColumn = columnsCopy[sourceIndex]
-        const targetColumn = columnsCopy[targetIndex]
-
-        const taskIndex = sourceColumn.tasks.findIndex((task) => task.id === taskId)
-        if (taskIndex === -1) {
-          return board
-        }
-
-        if (targetTaskId && taskId === targetTaskId) {
-          return board
-        }
-
-        const [task] = sourceColumn.tasks.splice(taskIndex, 1)
-
-        let insertIndex = targetTaskId
-          ? targetColumn.tasks.findIndex((task) => task.id === targetTaskId)
-          : targetColumn.tasks.length
-
-        if (insertIndex === -1) {
-          insertIndex = targetColumn.tasks.length
-        }
-
-        const isSameColumn = sourceColumnId === targetColumnId
-        if (isSameColumn && taskIndex < insertIndex) {
-          insertIndex -= 1
-        }
-
-        targetColumn.tasks.splice(insertIndex, 0, task)
-
-        return { ...board, columns: columnsCopy }
-      })
-
-      return { boards }
-    }),
+      await get().loadBoard(boardId)
+    } catch (error) {
+      console.error('Failed to move task:', error)
+    }
+  },
 }))

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   DndContext,
   type DragEndEvent,
@@ -32,6 +32,7 @@ import {
 import { useBoardStore } from './store/boardStore'
 import type { Column, Task, TaskPriority } from './types/board'
 import type { PriorityFilter, SortMode } from './types/filters'
+import { api } from './api/client'
 import './App.scss'
 
 function App() {
@@ -43,10 +44,18 @@ function App() {
   const [taskToEdit, setTaskToEdit] = useState<{ task: Task; columnId: string } | null>(null)
   const [columnToEdit, setColumnToEdit] = useState<Column | null>(null)
   const [authMode, setAuthMode] = useState<AuthFormMode>('login')
-  const [currentUser, setCurrentUser] = useState<{ fullName: string; email: string } | null>(null)
-  const [users, setUsers] = useState<Record<string, { fullName: string; password: string }>>({})
-  const { boards, activeBoardId, addColumn, updateColumn, moveColumn, moveTask } = useBoardStore()
+  const [currentUser, setCurrentUser] = useState<{ fullName: string; email: string } | null>(() => {
+    const stored = localStorage.getItem('currentUser')
+    return stored ? JSON.parse(stored) : null
+  })
+  const { boards, activeBoardId, isLoading, loadBoards, addColumn, updateColumn, moveColumn, moveTask } = useBoardStore()
   const activeBoard = boards.find((board) => board.id === activeBoardId)
+
+  useEffect(() => {
+    if (currentUser) {
+      loadBoards()
+    }
+  }, [currentUser, loadBoards])
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -117,35 +126,47 @@ function App() {
 
   const handleLogin = useCallback(
     async ({ email, password }: LoginPayload): Promise<AuthResult> => {
-      const normalizedEmail = email.trim().toLowerCase()
-      const user = users[normalizedEmail]
-      if (!user || user.password !== password) {
-        return { success: false, message: 'Неверный email или пароль' }
-      }
-      setCurrentUser({ fullName: user.fullName, email: normalizedEmail })
+      try {
+        const response = await api.post('/auth/login', { email, password })
+        const { user, accessToken } = response.data
+        
+        localStorage.setItem('accessToken', accessToken)
+        localStorage.setItem('currentUser', JSON.stringify({ fullName: user.fullName, email: user.email }))
+        
+        setCurrentUser({ fullName: user.fullName, email: user.email })
+        await loadBoards()
       return { success: true }
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Ошибка при входе'
+        return { success: false, message }
+      }
     },
-    [users]
+    [loadBoards]
   )
 
   const handleRegister = useCallback(
     async ({ fullName, email, password }: RegisterPayload): Promise<AuthResult> => {
-      const normalizedEmail = email.trim().toLowerCase()
-      if (users[normalizedEmail]) {
-        return { success: false, message: 'Email уже зарегистрирован' }
-      }
-      const formattedName = fullName.trim()
-      setUsers((prev) => ({
-        ...prev,
-        [normalizedEmail]: { fullName: formattedName, password },
-      }))
-      setCurrentUser({ fullName: formattedName, email: normalizedEmail })
+      try {
+        const response = await api.post('/auth/register', { fullName, email, password })
+        const { user, accessToken } = response.data
+        
+        localStorage.setItem('accessToken', accessToken)
+        localStorage.setItem('currentUser', JSON.stringify({ fullName: user.fullName, email: user.email }))
+        
+        setCurrentUser({ fullName: user.fullName, email: user.email })
+        await loadBoards()
       return { success: true }
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Ошибка при регистрации'
+        return { success: false, message }
+      }
     },
-    [users]
+    [loadBoards]
   )
 
   const handleSignOut = useCallback(() => {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('currentUser')
     setCurrentUser(null)
     setTaskModalOpen(false)
     setColumnModalOpen(false)
