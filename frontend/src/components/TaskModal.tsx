@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBoardStore } from '../store/boardStore'
 import type { Column, Task, TaskPriority, TaskSubtask } from '../types/board'
 import { RevealableSection } from './RevealableSection'
+import { FormInput } from './FormInput'
 import './TaskModal.scss'
 
 interface TaskModalProps {
@@ -233,7 +234,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
         <form className="task-modal__form" onSubmit={handleSubmit}>
           <div className="task-modal__field">
             <label htmlFor="title">Название</label>
-            <input
+            <FormInput
               id="title"
               name="title"
               ref={titleInputRef}
@@ -283,6 +284,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
                   <label className="task-modal__subtask-label">
                     <input
                       type="checkbox"
+                      name="subtaskToggle"
                       checked={subtask.isDone}
                       onChange={() => handleToggleSubtask(subtask.id)}
                       className="task-modal__subtask-checkbox"
@@ -301,8 +303,9 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
               ))}
             </ul>
             <div className="task-modal__subtask-input">
-              <input
+              <FormInput
                 type="text"
+                name="newSubtaskTitle"
                 value={newSubtaskTitle}
                 onChange={(event) => setNewSubtaskTitle(event.target.value)}
                 placeholder="Название подзадачи"
@@ -312,6 +315,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
                     handleAddSubtask()
                   }
                 }}
+                size="compact"
               />
               <button type="button" onClick={handleAddSubtask}>
                 Добавить
@@ -344,8 +348,9 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
               </ul>
             )}
             <div className="task-modal__tag-input">
-              <input
+              <FormInput
                 type="text"
+                name="newTagTitle"
                 value={newTagTitle}
                 onChange={(event) => setNewTagTitle(event.target.value)}
                 placeholder="Название тега"
@@ -355,6 +360,7 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
                     handleAddTag()
                   }
                 }}
+                size="compact"
               />
               <button type="button" onClick={handleAddTag}>
                 Добавить
@@ -396,23 +402,25 @@ export function TaskModal({ isOpen, onClose, columns, initialColumnId, taskToEdi
 
             <div className="task-modal__field">
               <label htmlFor="dueDate">Срок</label>
-              <input
+              <FormInput
                 id="dueDate"
                 name="dueDate"
                 type="date"
                 value={form.dueDate}
                 onChange={handleChange}
+                size="compact"
               />
             </div>
 
             <div className="task-modal__field">
               <label htmlFor="assigneeName">Исполнитель</label>
-              <input
+              <FormInput
                 id="assigneeName"
                 name="assigneeName"
                 value={form.assigneeName}
                 onChange={handleChange}
                 placeholder="Имя исполнителя"
+                size="compact"
               />
             </div>
           </div>

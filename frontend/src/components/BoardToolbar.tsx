@@ -1,5 +1,6 @@
 import './BoardToolbar.scss'
 import type { PriorityFilter, SortMode } from '../types/filters'
+import { FormInput } from './FormInput'
 
 interface BoardToolbarProps {
   searchQuery: string
@@ -27,18 +28,24 @@ export function BoardToolbar({
   return (
     <section className="board-toolbar" aria-label="Панель управления доской">
       <div className="board-toolbar__controls">
-        <label className="board-toolbar__control board-toolbar__control_type_search">
+        <label className="board-toolbar__control board-toolbar__control_type_search" htmlFor="board-search">
           <span>Поиск</span>
-          <input
+          <FormInput
+            id="board-search"
+            name="boardSearch"
             type="search"
             placeholder="Поиск задач по названию, описанию или тегам"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
+            size="compact"
           />
         </label>
-        <label className="board-toolbar__control">
+        <label className="board-toolbar__control" htmlFor="board-priority">
           <span>Приоритет</span>
           <select
+            id="board-priority"
+            name="boardPriority"
+            className="form-input form-input_size_compact"
             value={priorityFilter}
             onChange={(event) => onPriorityChange(event.target.value as PriorityFilter)}
           >
@@ -48,9 +55,15 @@ export function BoardToolbar({
             <option value="low">Низкий</option>
           </select>
         </label>
-        <label className="board-toolbar__control">
+        <label className="board-toolbar__control" htmlFor="board-sort-mode">
           <span>Сортировка</span>
-          <select value={sortMode} onChange={(event) => onSortModeChange(event.target.value as SortMode)}>
+          <select
+            id="board-sort-mode"
+            name="boardSortMode"
+            className="form-input form-input_size_compact"
+            value={sortMode}
+            onChange={(event) => onSortModeChange(event.target.value as SortMode)}
+          >
             <option value="priority">По приоритету</option>
             <option value="alphabetical">По алфавиту</option>
             <option value="dueDateAsc">По сроку ↑</option>

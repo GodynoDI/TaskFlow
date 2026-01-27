@@ -296,9 +296,6 @@ function App() {
           )}
         </div>
         <div className="board-page__actions">
-          <button className="btn btn_type_primary" onClick={handleOpenCreateTaskModal}>
-            + Добавить задачу
-          </button>
           <div className="board-page__user">
             <div className="board-page__user-avatar" aria-hidden="true">
               {userInitials}
@@ -311,6 +308,9 @@ function App() {
               Выйти
             </button>
           </div>
+          <button className="btn btn_type_primary" onClick={handleOpenCreateTaskModal}>
+            + Добавить задачу
+          </button>
         </div>
       </header>
       <BoardToolbar

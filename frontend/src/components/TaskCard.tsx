@@ -94,6 +94,7 @@ export function TaskCard({ task, columnId, onEdit }: TaskCardProps) {
               <label className="task-card__subtask-label">
                 <input
                   type="checkbox"
+                  name="taskCardSubtaskToggle"
                   className="task-card__subtask-checkbox"
                   checked={subtask.isDone}
                   onChange={() => handleSubtaskToggle(subtask.id)}

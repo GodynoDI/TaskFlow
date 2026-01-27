@@ -17,9 +17,9 @@
   padding: 48px clamp(24px, 5vw, 72px) 64px;
 
   &__header {
+    height: 170px;
     margin-bottom: 36px;
     display: flex;
-    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
@@ -38,13 +38,15 @@
   }
 
   &__actions {
+    height: 100%;
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    justify-content: space-around;
     align-items: center;
-    flex-wrap: wrap;
   }
 
   &__columns {
+    margin-top: 24px;
     display: flex;
     align-items: stretch;
     gap: 24px;

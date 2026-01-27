@@ -61,22 +61,10 @@
       color: var(--color-gray);
     }
 
-    input {
-      border: 1px solid var(--color-border-soft);
+    .form-input {
       border-radius: 14px;
       padding: 12px 16px;
       font-size: 0.95rem;
-      font-family: inherit;
-      transition: border-color 0.2s ease;
-
-      &[aria-invalid='true'] {
-        border-color: var(--color-accent-danger);
-      }
-
-      &:focus {
-        outline: none;
-        border-color: var(--color-accent-primary);
-      }
     }
   }
 

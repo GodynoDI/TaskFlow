@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Column } from '../types/board'
+import { FormInput } from './FormInput'
 import './ColumnModal.scss'
 
 interface ColumnModalProps {
@@ -85,7 +86,7 @@ export function ColumnModal({ isOpen, onClose, onSubmit, columnToEdit, onUpdate 
         <form className="column-modal__form" onSubmit={handleSubmit}>
           <label className="column-modal__field">
             <span>Название</span>
-            <input
+            <FormInput
               name="title"
               ref={titleInputRef}
               value={title}
@@ -116,9 +117,15 @@ export function ColumnModal({ isOpen, onClose, onSubmit, columnToEdit, onUpdate 
                 </button>
               ))}
             </div>
-            <label className="column-modal__custom-color">
+            <label className="column-modal__custom-color" htmlFor="column-accent-color">
               <span>Или укажите свой</span>
-              <input type="color" value={accentColor} onChange={handleCustomColorChange} />
+              <input
+                id="column-accent-color"
+                name="accentColorCustom"
+                type="color"
+                value={accentColor}
+                onChange={handleCustomColorChange}
+              />
             </label>
           </div>
 

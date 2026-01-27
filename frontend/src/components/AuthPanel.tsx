@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { FormInput } from './FormInput'
 import './AuthPanel.scss'
 
 export type AuthFormMode = 'login' | 'register'
@@ -146,7 +147,7 @@ export function AuthPanel({ mode, onModeChange, onLogin, onRegister }: AuthPanel
         {mode === 'register' && (
           <div className="auth-panel__field">
             <label htmlFor="fullName">Имя</label>
-            <input
+            <FormInput
               id="fullName"
               name="fullName"
               type="text"
@@ -161,7 +162,7 @@ export function AuthPanel({ mode, onModeChange, onLogin, onRegister }: AuthPanel
 
         <div className="auth-panel__field">
           <label htmlFor="email">Email</label>
-          <input
+          <FormInput
             id="email"
             name="email"
             type="email"
@@ -175,7 +176,7 @@ export function AuthPanel({ mode, onModeChange, onLogin, onRegister }: AuthPanel
 
         <div className="auth-panel__field">
           <label htmlFor="password">Пароль</label>
-          <input
+          <FormInput
             id="password"
             name="password"
             type="password"
@@ -190,7 +191,7 @@ export function AuthPanel({ mode, onModeChange, onLogin, onRegister }: AuthPanel
         {mode === 'register' && (
           <div className="auth-panel__field">
             <label htmlFor="confirmPassword">Подтверждение пароля</label>
-            <input
+            <FormInput
               id="confirmPassword"
               name="confirmPassword"
               type="password"
